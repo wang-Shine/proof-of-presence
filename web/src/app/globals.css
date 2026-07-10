@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0d0f16;
+  --surface: #1e2329;
+  --border: #2b3139;
+  --text: #eaecef;
+  --muted: #848e9c;
+  --accent: #f0b90b;
+  --success: #02c076;
+  --danger: #f6465d;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}

@@ -1,0 +1,28 @@
+# Foundry 配置
+# 文档:https://book.getfoundry.sh/reference/config/
+
+[profile.default]
+src = "src"                          # 合约源码目录
+out = "out"                          # 编译产物目录
+libs = ["lib"]                       # 依赖库目录(forge install 会装在这里)
+solc_version = "0.8.24"              # Solidity 编译器版本
+optimizer = true                     # 开启优化器,降低部署 Gas
+optimizer_runs = 200                 # 优化运行次数(默认 200,适合一般合约)
+via_ir = true                        # IR 编译开关,避免 stack too deep
+remappings = [                       # 路径别名,让 import 更短
+    "@openzeppelin/=lib/openzeppelin-contracts/",
+    "forge-std/=lib/forge-std/src/",
+]
+
+# 测试相关
+[profile.default.fuzz]
+runs = 256                           # 模糊测试次数
+
+# RPC 端点(forge script --rpc-url sepolia 时用得到)
+[rpc_endpoints]
+sepolia = "${SEPOLIA_RPC_URL}"
+anvil = "http://localhost:8545"
+
+# Etherscan 验证配置(发布合约后验证源码)
+[etherscan]
+sepolia = { key = "${ETHERSCAN_API_KEY}" }
