@@ -9,7 +9,7 @@ import type { Address } from "viem";
 
 // === 当前使用的链 ID ===
 // 切到本地 Anvil 用 31337,切到 Sepolia 用 11155111
-export const ACTIVE_CHAIN_ID = 31337; // 改成 11155111 部署到 Sepolia
+export const ACTIVE_CHAIN_ID = 11155111; // 改成 11155111 部署到 Sepolia
 
 // === 合约地址 ===
 // 部署完后从 forge script 的日志里复制过来
@@ -25,9 +25,9 @@ export const CONTRACTS: Record<
   },
   // Sepolia 测试网(部署后填)
   11155111: {
-    lbr: "0x0000000000000000000000000000000000000000",
-    badge: "0x0000000000000000000000000000000000000000",
-    checkIn: "0x0000000000000000000000000000000000000000",
+    lbr: "0xA2C622A3a1aCD3e03a3B850405E54a5D64403147",
+    badge: "0xFEA62dB71D72135764be94c91d3D47F026202E07",
+    checkIn: "0x7dB863E84dAf70E1d093cD9C877AD1b11f3d902a",
   },
 };
 

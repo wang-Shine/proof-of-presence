@@ -10,7 +10,17 @@ import { ReactNode, useState } from "react";
 import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createAppKit } from "@reown/appkit/react";
+import { sepolia } from "wagmi/chains";
 import { wagmiAdapter, projectId, networks, anvil } from "@/config/wagmi";
+
+// 生产环境默认走 Sepolia,本地开发走 Anvil
+// (Anvil 只在本地能连,线上用户默认切到 Anvil 会连不上 RPC)
+const defaultNetwork =
+  process.env.NODE_ENV === "production" ? sepolia : anvil;
+
+// 站点 URL 会传给钱包端显示"你正在连接谁",线上必须和实际域名一致
+// 否则手机端 MetaMask/Trust 等钱包可能拒绝连接
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 // 1. 在模块加载时初始化 AppKit (它是单例,只能初始化一次)
 //    这里调一次后,全局都能用 <appkit-button /> 这个 Web Component 弹出钱包连接弹窗
@@ -18,11 +28,11 @@ createAppKit({
   adapters: [wagmiAdapter],
   projectId,
   networks: [...networks],
-  defaultNetwork: anvil,
+  defaultNetwork,
   metadata: {
     name: "Web3 Check-in Demo",
     description: "学习 DApp 开发的签到 demo",
-    url: "http://localhost:3000",
+    url: appUrl,
     icons: [],
   },
   features: {

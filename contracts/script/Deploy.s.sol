@@ -16,19 +16,19 @@ import {CheckIn} from "../src/CheckIn.sol";
  * 部署后会打印 3 个合约地址,记得复制到前端的 web/src/config/contracts.ts
  */
 contract Deploy is Script {
-    function run() external returns (LBRToken token, BadgeNFT badge, CheckIn checkIn) {
+    function run() external {
         vm.startBroadcast(); // 后续操作都会被打包成真实交易
 
         // 1. 部署 LBR 代币
-        token = new LBRToken();
+        LBRToken token = new LBRToken();
         console.log("LBR Token:", address(token));
 
         // 2. 部署 NFT 徽章
-        badge = new BadgeNFT();
+        BadgeNFT badge = new BadgeNFT();
         console.log("Badge NFT:", address(badge));
 
         // 3. 部署签到主合约
-        checkIn = new CheckIn(address(token), address(badge));
+        CheckIn checkIn = new CheckIn(address(token), address(badge));
         console.log("CheckIn:  ", address(checkIn));
 
         // 4. 授权 CheckIn 合约铸造 LBR 和 NFT
