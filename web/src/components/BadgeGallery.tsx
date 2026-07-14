@@ -34,6 +34,7 @@ export default function BadgeGallery() {
         abi: badgeAbi,
         functionName: "tokenLevel" as const,
         args: [tokenId],
+        chainId: ACTIVE_CHAIN_ID, // 显式指定链,和读取 tokenIds 保持一致
       })) ?? [],
     query: { enabled: !!tokenIds && tokenIds.length > 0 },
   });

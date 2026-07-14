@@ -11,12 +11,7 @@ import { WagmiProvider } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createAppKit } from "@reown/appkit/react";
 import { sepolia } from "wagmi/chains";
-import { wagmiAdapter, projectId, networks, anvil } from "@/config/wagmi";
-
-// 生产环境默认走 Sepolia,本地开发走 Anvil
-// (Anvil 只在本地能连,线上用户默认切到 Anvil 会连不上 RPC)
-const defaultNetwork =
-  process.env.NODE_ENV === "production" ? sepolia : anvil;
+import { wagmiAdapter, projectId, networks } from "@/config/wagmi";
 
 // 站点 URL 会传给钱包端显示"你正在连接谁",线上必须和实际域名一致
 // 否则手机端 MetaMask/Trust 等钱包可能拒绝连接
@@ -28,7 +23,7 @@ createAppKit({
   adapters: [wagmiAdapter],
   projectId,
   networks: [...networks],
-  defaultNetwork,
+  defaultNetwork: sepolia,
   metadata: {
     name: "Web3 Check-in Demo",
     description: "学习 DApp 开发的签到 demo",

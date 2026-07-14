@@ -51,8 +51,6 @@ export default function CheckInCard() {
   const canCheckIn = status.canCheckInToday;
   const isBusy = isPending || isConfirming;
 
-  console.log(status.streak)
-
   return (
     <Card>
       <h2 className="text-xl font-semibold mb-4">每日签到</h2>

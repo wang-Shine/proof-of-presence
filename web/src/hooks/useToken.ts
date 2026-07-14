@@ -33,6 +33,7 @@ export function useLBRBalance() {
     abi: lbrAbi,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
+    chainId: ACTIVE_CHAIN_ID, // 显式指定链,不受钱包当前所在链影响
     query: { enabled: !!address },
   });
 }
@@ -50,6 +51,7 @@ export function useLBRAllowance(spender: Address) {
     abi: lbrAbi,
     functionName: "allowance",
     args: address ? [address, spender] : undefined,
+    chainId: ACTIVE_CHAIN_ID, // 显式指定链,不受钱包当前所在链影响
     query: { enabled: !!address },
   });
 }

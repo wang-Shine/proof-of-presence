@@ -13,12 +13,14 @@
 import { useEffect } from "react";
 import {
   useAccount,
+  usePublicClient,
   useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
   useWatchContractEvent,
 } from "wagmi";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { parseAbiItem } from "viem";
 import {
   ACTIVE_CHAIN_ID,
   CONTRACTS,
@@ -42,6 +44,7 @@ export function useUserStatus() {
     abi: checkInAbi,
     functionName: "getUserStatus",
     args: address ? [address] : undefined,
+    chainId: ACTIVE_CHAIN_ID, // 显式指定链,不受钱包当前所在链影响
     query: {
       enabled: !!address,
       // 数据返回后处理:把 tuple 变成 object
@@ -124,6 +127,55 @@ export function useCheckInTx() {
  *
  * @param onCheckedIn 收到新签到事件时的回调
  */
+/**
+ * 拉取最近的历史签到事件
+ *
+ * 知识点:
+ *  - useWatchContractEvent 只监听挂载之后的新事件,进页面前的事件看不到
+ *  - 想显示"最近发生了什么"必须主动 getLogs 查一次历史
+ *  - Alchemy 免费额度对 block range 有限制(通常 500 块),这里只回溯 1 万块
+ *    Sepolia 大概 12 秒一个块 → 10000 块 ≈ 33 小时
+ *
+ * @param limit 最多返回多少条(倒序)
+ */
+export function useRecentCheckedIn(limit = 10) {
+  const publicClient = usePublicClient({ chainId: ACTIVE_CHAIN_ID });
+
+  return useQuery({
+    queryKey: ["recentCheckedIn", ACTIVE_CHAIN_ID, limit],
+    enabled: !!publicClient,
+    // 30 秒内不重复拉,配合 useWatchContractEvent 实时补充新事件
+    staleTime: 30_000,
+    queryFn: async () => {
+      if (!publicClient) return [];
+      const latest = await publicClient.getBlockNumber();
+      // 回溯 1 万个块,够看最近一天多的签到
+      const fromBlock = latest > 10_000n ? latest - 10_000n : 0n;
+
+      const logs = await publicClient.getLogs({
+        address: CONTRACTS[ACTIVE_CHAIN_ID].checkIn,
+        event: parseAbiItem(
+          "event CheckedIn(address indexed user, uint256 streak, uint256 reward, uint256 timestamp)",
+        ),
+        fromBlock,
+        toBlock: latest,
+      });
+
+      // 倒序(最新的在前),截断
+      return logs
+        .slice()
+        .reverse()
+        .slice(0, limit)
+        .map((log) => ({
+          user: log.args.user!,
+          streak: log.args.streak ?? 0n,
+          reward: log.args.reward ?? 0n,
+          timestamp: log.args.timestamp ?? 0n,
+        }));
+    },
+  });
+}
+
 export function useCheckedInEvents(
   onCheckedIn: (event: {
     user: `0x${string}`;
@@ -136,8 +188,9 @@ export function useCheckedInEvents(
     address: CONTRACTS[ACTIVE_CHAIN_ID].checkIn,
     abi: checkInAbi,
     eventName: "CheckedIn",
-    poll: true,             // 强制走 HTTP 轮询,避开 WebSocket 订阅报错
-    pollingInterval: 4_000, // 4 秒查一次新事件
+    chainId: ACTIVE_CHAIN_ID, // 显式指定 Sepolia,不受钱包当前链影响
+    poll: true,               // 强制走 HTTP 轮询,避开 WebSocket 订阅报错
+    pollingInterval: 4_000,   // 4 秒查一次新事件
     onLogs(logs) {
       for (const log of logs) {
         // log.args 是解码后的事件参数

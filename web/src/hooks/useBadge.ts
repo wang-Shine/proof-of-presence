@@ -33,6 +33,7 @@ export function useMyBadges() {
     abi: badgeAbi,
     functionName: "badgesOf",
     args: address ? [address] : undefined,
+    chainId: ACTIVE_CHAIN_ID, // 显式指定链,不受钱包当前所在链影响
     query: { enabled: !!address },
   });
 }
@@ -46,6 +47,7 @@ export function useBadgeLevel(tokenId: bigint | undefined) {
     abi: badgeAbi,
     functionName: "tokenLevel",
     args: tokenId !== undefined ? [tokenId] : undefined,
+    chainId: ACTIVE_CHAIN_ID,
     query: { enabled: tokenId !== undefined },
   });
 }

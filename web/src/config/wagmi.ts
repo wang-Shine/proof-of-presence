@@ -10,37 +10,34 @@
 
 "use client";
 
-import { cookieStorage, createStorage } from "wagmi";
+import { cookieStorage, createStorage, http } from "wagmi";
 import { mainnet, sepolia } from "wagmi/chains";
-import { defineChain } from "viem";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 
 // 1. 在 https://cloud.reown.com 创建项目获取 projectId(免费)
-//    本地开发可以先用一个占位,但实际钱包连接会失败
 export const projectId =
   process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || "DEMO_PROJECT_ID";
 
-// 2. 自定义本地 Anvil 链(Foundry 的本地测试链)
-export const anvil = defineChain({
-  id: 31337,
-  name: "Anvil Local",
-  nativeCurrency: { decimals: 18, name: "Ether", symbol: "ETH" },
-  rpcUrls: {
-    default: { http: ["http://127.0.0.1:8545"] },
-  },
-});
+// 2. 配置支持的链(顺序很重要,第一个是默认链)
+//    只用 Sepolia 测试网,mainnet 作为备选(切换用)
+export const networks = [sepolia, mainnet] as const;
 
-// 3. 配置支持的链(顺序很重要,第一个是默认链)
-export const networks = [anvil, sepolia, mainnet] as const;
+// 3. Sepolia RPC:优先用环境变量里的 Alchemy/Infura,不填走 viem 内置公共节点
+const sepoliaRpc = process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL;
 
 // 4. wagmi adapter 配置
 //    - ssr: true → SSR 友好,避免水合错误
 //    - storage: 用 cookie 存储连接状态,刷新页面后自动重连
+//    - transports: 显式指定每条链的 RPC 端点
 export const wagmiAdapter = new WagmiAdapter({
   storage: createStorage({ storage: cookieStorage }),
   ssr: true,
   networks: [...networks],
   projectId,
+  transports: {
+    [sepolia.id]: http(sepoliaRpc || undefined),
+    [mainnet.id]: http(),
+  },
 });
 
 // 5. 导出 wagmi config 供 WagmiProvider 使用
