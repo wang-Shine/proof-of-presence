@@ -12,6 +12,7 @@
 
 import { useEffect, useState } from "react";
 import { formatUnits } from "viem";
+import { useAccount } from "wagmi";
 import { useCheckedInEvents, useRecentCheckedIn } from "@/hooks/useCheckIn";
 
 interface FeedItem {
@@ -24,6 +25,7 @@ interface FeedItem {
 }
 
 export default function ActivityFeed() {
+  const { isConnected } = useAccount();
   const [items, setItems] = useState<FeedItem[]>([]);
   const { data: history, isLoading, error } = useRecentCheckedIn(10);
 
@@ -48,6 +50,10 @@ export default function ActivityFeed() {
     });
   });
 
+  // 断开钱包时不展示任何记录:直接在渲染层短路,而不是清空 items
+  // (items 清空后,history 查询若因缓存过期重新触发,又会把数据填回来)
+  const visibleItems = isConnected ? items : [];
+
   return (
     <div className="bg-[#1E2329] border border-[#2B3139] rounded-lg p-5">
       <div className="flex items-center gap-2 mb-3">
@@ -55,29 +61,35 @@ export default function ActivityFeed() {
         <span className="inline-block w-2 h-2 bg-[#02C076] rounded-full animate-pulse" />
       </div>
       <p className="text-xs text-[#848E9C] mb-4">
-        最近的签到事件 · 有新签到会自动追加
+        最近的签到记录 · 新签到通过 WebSocket 实时推送到这里
       </p>
 
-      {isLoading && (
+      {!isConnected && (
+        <p className="text-sm text-[#5E6673] py-4 text-center">
+          请先连接钱包
+        </p>
+      )}
+
+      {isConnected && isLoading && (
         <p className="text-sm text-[#5E6673] py-4 text-center animate-pulse">
           加载历史签到中...
         </p>
       )}
 
-      {error && (
+      {isConnected && error && (
         <p className="text-sm text-[#F6465D] py-4 text-center">
           读取历史事件失败: {(error as Error).message.slice(0, 80)}
         </p>
       )}
 
-      {!isLoading && items.length === 0 && (
+      {isConnected && !isLoading && visibleItems.length === 0 && (
         <p className="text-sm text-[#5E6673] py-4 text-center">
           最近还没有签到记录
         </p>
       )}
 
       <div className="space-y-2">
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <div
             key={item.key}
             className="flex items-center justify-between p-2 bg-[#0D0F16] border border-[#2B3139] rounded text-xs"

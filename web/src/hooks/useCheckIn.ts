@@ -189,8 +189,8 @@ export function useCheckedInEvents(
     abi: checkInAbi,
     eventName: "CheckedIn",
     chainId: ACTIVE_CHAIN_ID, // 显式指定 Sepolia,不受钱包当前链影响
-    poll: true,               // 强制走 HTTP 轮询,避开 WebSocket 订阅报错
-    pollingInterval: 4_000,   // 4 秒查一次新事件
+    // 走 wagmi transport 的默认策略:配了 WebSocket 就 eth_subscribe 实时推送,
+    // 否则自动 fallback 到 HTTP 轮询。见 config/wagmi.ts 里 sepoliaTransport。
     onLogs(logs) {
       for (const log of logs) {
         // log.args 是解码后的事件参数

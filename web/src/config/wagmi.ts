@@ -10,7 +10,7 @@
 
 "use client";
 
-import { cookieStorage, createStorage, http } from "wagmi";
+import { cookieStorage, createStorage, http, webSocket, fallback } from "wagmi";
 import { mainnet, sepolia } from "wagmi/chains";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 
@@ -22,10 +22,19 @@ export const projectId =
 //    只用 Sepolia 测试网,mainnet 作为备选(切换用)
 export const networks = [sepolia, mainnet] as const;
 
-// 3. Sepolia RPC:优先用环境变量里的 Alchemy/Infura,不填走 viem 内置公共节点
-const sepoliaRpc = process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL;
+// 3. Sepolia RPC:HTTPS 用来读合约,WSS 用来订阅事件
+//    Alchemy 免费套餐同时提供两个 URL,建议都配上
+//    未配置 WSS 时,fallback 会自动只用 HTTP + 轮询
+const sepoliaHttp = process.env.NEXT_PUBLIC_SEPOLIA_RPC_URL;
+const sepoliaWs = process.env.NEXT_PUBLIC_SEPOLIA_WS_URL;
 
-// 4. wagmi adapter 配置
+// 4. Sepolia transport:优先 WebSocket(实时订阅事件),断开时自动回退到 HTTP
+//    这样 useWatchContractEvent 可以用 eth_subscribe 实时推送,不用 4 秒轮询
+const sepoliaTransport = sepoliaWs
+  ? fallback([webSocket(sepoliaWs), http(sepoliaHttp || undefined)])
+  : http(sepoliaHttp || undefined);
+
+// 5. wagmi adapter 配置
 //    - ssr: true → SSR 友好,避免水合错误
 //    - storage: 用 cookie 存储连接状态,刷新页面后自动重连
 //    - transports: 显式指定每条链的 RPC 端点
@@ -35,7 +44,7 @@ export const wagmiAdapter = new WagmiAdapter({
   networks: [...networks],
   projectId,
   transports: {
-    [sepolia.id]: http(sepoliaRpc || undefined),
+    [sepolia.id]: sepoliaTransport,
     [mainnet.id]: http(),
   },
 });
